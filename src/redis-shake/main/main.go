@@ -38,6 +38,7 @@ const (
 
 func main() {
 	var err error
+	// defer 关键字类似 finally
 	defer handleExit()
 	defer utils.Goodbye()
 
@@ -112,6 +113,7 @@ func main() {
 
 	// create metric
 	metric.CreateMetric(runner)
+	// 创建一个协程
 	go startHttpServer()
 
 	// print configuration

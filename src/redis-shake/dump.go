@@ -31,6 +31,7 @@ func (cmd *CmdDump) GetDetailedInfo() interface{} {
 }
 
 func (cmd *CmdDump) Main() {
+	// 创建一个带缓冲区的 channel，channel 中的数据类型是 node
 	cmd.dumpChan = make(chan node, len(conf.Options.SourceAddressList))
 
 	for i, source := range conf.Options.SourceAddressList {
@@ -54,6 +55,7 @@ func (cmd *CmdDump) Main() {
 			log.Infof("start routine[%v]", idx)
 			for {
 				select {
+				// 从 channel 中非阻塞获取数据
 				case nd, ok := <-cmd.dumpChan:
 					if !ok {
 						log.Infof("close routine[%v]", idx)
@@ -152,10 +154,12 @@ func (dd *dbDumper) sendCmd(master, auth_type, passwd string, tlsEnable bool, tl
 
 func (dd *dbDumper) dumpRDBFile(reader *bufio.Reader, writer *bufio.Writer, nsize int64) {
 	var nread atomic2.Int64
+	// 创建一个 channel
 	wait := make(chan struct{})
 
 	// read from reader and write into writer int stream way
 	go func() {
+		// 协程执行完函数后，关闭 channel，阻塞等待 channel 的 receiver 被唤醒
 		defer close(wait)
 		p := make([]byte, utils.WriterBufferSize)
 		for nsize != nread.Get() {
@@ -171,6 +175,7 @@ func (dd *dbDumper) dumpRDBFile(reader *bufio.Reader, writer *bufio.Writer, nsiz
 		select {
 		case <-wait:
 			done = true
+		// 表示 1s 后后返回一条 time.Time 类型的 channel 消息
 		case <-time.After(time.Second):
 		}
 		n := nread.Get()

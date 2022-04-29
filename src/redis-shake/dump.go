@@ -153,6 +153,7 @@ func (dd *dbDumper) sendCmd(master, auth_type, passwd string, tlsEnable bool, tl
 }
 
 func (dd *dbDumper) dumpRDBFile(reader *bufio.Reader, writer *bufio.Writer, nsize int64) {
+	// AtomicInteger 初始值是 0
 	var nread atomic2.Int64
 	// 创建一个 channel
 	wait := make(chan struct{})
@@ -161,10 +162,13 @@ func (dd *dbDumper) dumpRDBFile(reader *bufio.Reader, writer *bufio.Writer, nsiz
 	go func() {
 		// 协程执行完函数后，关闭 channel，阻塞等待 channel 的 receiver 被唤醒
 		defer close(wait)
+		// 创建一个 byte 数组
 		p := make([]byte, utils.WriterBufferSize)
 		for nsize != nread.Get() {
 			nstep := int(nsize - nread.Get())
+			// copy 数据， reader -> p -> writer
 			ncopy := int64(utils.Iocopy(reader, writer, p, nstep))
+			// 计数器累加
 			nread.Add(ncopy)
 			utils.FlushWriter(writer)
 		}
